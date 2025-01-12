@@ -8,8 +8,7 @@ interface IM3ter is IERC721 {
         // Identifiers
         uint256 tokenId;
         bytes32 publicKey;
-        bytes32 contractId;
-
+        bytes32 processId;
         // Terms of Use
         uint256 tariff;
         uint256 escalator;
@@ -25,7 +24,7 @@ interface IM3ter is IERC721 {
     function setup(
         uint256 tokenId,
         bytes32 publicKey,
-        bytes32 contractId,
+        bytes32 processId,
         uint256 tariff,
         uint256 escalator,
         uint256 interval

@@ -13,9 +13,11 @@ import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.
 
 contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Pausable, AccessControl, ERC721Burnable {
     mapping(uint256 => Detail) public details;
+    mapping(uint256 => bytes32) public l2Allowlist;
     mapping(bytes32 => uint256) public keyRegistry;
-    mapping(bytes32 => uint256) public contractRegistry;
+    mapping(bytes32 => uint256) public processRegistry;
 
+    bytes32 public constant CURATOR = keccak256("CURATOR");
     bytes32 public constant MINTER = keccak256("MINTER");
     bytes32 public constant PAUSER = keccak256("PAUSER");
 
@@ -23,6 +25,10 @@ contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Paus
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER, msg.sender);
         _grantRole(PAUSER, msg.sender);
+    }
+
+    function _curateL2Allowlist(uint256 chainId, bytes32 l2Address) external onlyRole(CURATOR) whenNotPaused {
+        l2Allowlist[chainId] = l2Address;
     }
 
     function safeMint(address to, uint256 tokenId, string memory uri) external onlyRole(MINTER) whenNotPaused {
@@ -33,18 +39,18 @@ contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Paus
     function setup(
         uint256 tokenId,
         bytes32 publicKey,
-        bytes32 contractId,
+        bytes32 processId,
         uint256 tariff,
         uint256 escalator,
         uint256 interval
     ) external {
-        if (tokenId == 0 || publicKey == 0 || contractId == 0 || tariff == 0) revert CannotBeZero();
         if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
+        if (tokenId == 0 || publicKey == 0 || processId == 0 || tariff == 0) revert CannotBeZero();
+        details[tokenId] = Detail(tokenId, publicKey, processId, tariff, escalator, interval, block.number);
 
-        keyRegistry[publicKey] = tokenId;
-        contractRegistry[contractId] = tokenId;
-        details[tokenId] = Detail(tokenId, publicKey, contractId, tariff, escalator, interval, block.number);
         emit Register(tokenId, publicKey, msg.sender, block.timestamp);
+        processRegistry[processId] = tokenId;
+        keyRegistry[publicKey] = tokenId;
     }
 
     function pause() public onlyRole(PAUSER) {
