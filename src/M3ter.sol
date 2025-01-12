@@ -12,14 +12,15 @@ import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/exten
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
 contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Pausable, AccessControl, ERC721Burnable {
-    mapping(bytes32 => bytes32) public registry;
+    mapping(uint256 => Detail) public details;
+    mapping(bytes32 => uint256) public keyRegistry;
+    mapping(bytes32 => uint256) public contractRegistry;
+
     bytes32 public constant MINTER = keccak256("MINTER");
     bytes32 public constant PAUSER = keccak256("PAUSER");
-    bytes32 public constant REGISTRAR = keccak256("REGISTRAR");
 
     constructor() ERC721("M3ter", unicode"〔▸‿◂〕") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(REGISTRAR, msg.sender);
         _grantRole(MINTER, msg.sender);
         _grantRole(PAUSER, msg.sender);
     }
@@ -29,14 +30,20 @@ contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Paus
         _setTokenURI(tokenId, uri);
     }
 
-    function register(uint256 tokenId, bytes32 publicKey) external onlyRole(REGISTRAR) whenNotPaused {
-        if (tokenId == 0 || publicKey == 0) revert CannotBeZero();
-        uint256 registeredToken = uint256(registry[publicKey]);
-        bytes32 registeredKey = registry[bytes32(tokenId)];
-        if ((registeredToken != 0 || registeredKey != 0)) emit KeyOverwrite(registeredToken, registeredKey);
+    function setup(
+        uint256 tokenId,
+        bytes32 publicKey,
+        bytes32 contractId,
+        uint256 tariff,
+        uint256 escalator,
+        uint256 interval
+    ) external {
+        if (tokenId == 0 || publicKey == 0 || contractId == 0 || tariff == 0) revert CannotBeZero();
+        if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
 
-        registry[publicKey] = bytes32(tokenId);
-        registry[bytes32(tokenId)] = publicKey;
+        keyRegistry[publicKey] = tokenId;
+        contractRegistry[contractId] = tokenId;
+        details[tokenId] = Detail(tokenId, publicKey, contractId, tariff, escalator, interval, block.number);
         emit Register(tokenId, publicKey, msg.sender, block.timestamp);
     }
 
