@@ -11,20 +11,20 @@ import {ERC721Enumerable} from "@openzeppelin/contracts@5.1.0/token/ERC721/exten
 import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/extensions/ERC721URIStorage.sol";
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
-contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Pausable, AccessControl, ERC721Burnable {
-    mapping(uint256 => Detail) public details;
-    mapping(uint256 => bytes32) public l2Allowlist;
-    mapping(bytes32 => uint256) public keyRegistry;
-    mapping(bytes32 => uint256) public processRegistry;
-
-    bytes32 public constant CURATOR = keccak256("CURATOR");
-    bytes32 public constant MINTER = keccak256("MINTER");
+contract M3ter is IM3ter, ERC721Enumerable, ERC721URIStorage, ERC721Pausable, ERC721Burnable, AccessControl {
     bytes32 public constant PAUSER = keccak256("PAUSER");
+    bytes32 public constant MINTER = keccak256("MINTER");
+    bytes32 public constant CURATOR = keccak256("CURATOR");
 
-    constructor() ERC721("M3ter", unicode"〔▸‿◂〕") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(MINTER, msg.sender);
-        _grantRole(PAUSER, msg.sender);
+    mapping(bytes32 => uint256) public processRegistry;
+    mapping(bytes32 => uint256) public keyRegistry;
+    mapping(uint256 => bytes32) public l2Allowlist;
+    mapping(uint256 => Detail) public details;
+
+    constructor(address defaultAdmin) ERC721("M3ter", unicode"〔▸‿◂〕") {
+        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
+        _grantRole(MINTER, defaultAdmin);
+        _grantRole(PAUSER, defaultAdmin);
     }
 
     function _curateL2Allowlist(uint256 chainId, bytes32 l2Address) external onlyRole(CURATOR) whenNotPaused {
@@ -61,11 +61,18 @@ contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Paus
         _unpause();
     }
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "ar://";
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
     }
 
-    // The following functions are overrides required by Solidity.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(IERC165, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
 
     function _update(address to, uint256 tokenId, address auth)
         internal
@@ -79,16 +86,7 @@ contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Paus
         super._increaseBalance(account, value);
     }
 
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(AccessControl, ERC721, ERC721Enumerable, ERC721URIStorage, IERC165)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
+    function _baseURI() internal pure override returns (string memory) {
+        return "ar://";
     }
 }
