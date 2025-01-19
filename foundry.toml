@@ -7,6 +7,7 @@ optimizer-runs = 1000
 solc-version = "0.8.24"
 
 remappings = [
+    "@unruggable/gateways@0.1.5/=lib/unruggable-gateways/",
     "@openzeppelin/contracts@5.1.0/=lib/openzeppelin-contracts/contracts/"
 ]
 
