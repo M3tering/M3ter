@@ -7,6 +7,7 @@ import {ERC721Enumerable} from "@openzeppelin/contracts@5.1.0/token/ERC721/exten
 import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/extensions/ERC721URIStorage.sol";
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
+/// @custom:security-contact info@whynotswitch.com
 contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     bytes32 public constant MINTER = keccak256("MINTER");
     address public context;
