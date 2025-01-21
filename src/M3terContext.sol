@@ -15,7 +15,7 @@ contract M3terContext is IM3terContext, AccessControl {
     mapping(uint256 => bytes32) public l2Allowlist;
     mapping(uint256 => Detail) public details;
 
-    function _curateL2Allowlist(uint256 chainId, bytes32 l2Address) external onlyRole(CURATOR) whenNotPaused {
+    function _curateL2Allowlist(uint256 chainId, bytes32 l2Address) external onlyRole(CURATOR) {
         l2Allowlist[chainId] = l2Address;
     }
 
