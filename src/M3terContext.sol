@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts ^5.0.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.24;
 
 import {IM3terContext} from "./interfaces/IM3terContext.sol";
 import {IERC721} from "@openzeppelin/contracts@5.1.0/interfaces/IERC721.sol";
