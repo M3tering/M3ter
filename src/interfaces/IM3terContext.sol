@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IERC721} from "@openzeppelin/contracts@5.1.0/interfaces/IERC721.sol";
-
-interface IM3ter is IERC721 {
+interface IM3terContext {
     struct Detail {
         // Identifiers
         uint256 tokenId;
