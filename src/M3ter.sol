@@ -10,12 +10,10 @@ import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/exten
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
 import {ISP1Verifier} from "./interfaces/ISP1Verifier.sol";
-import {Keyring} from "./Keyring.sol";
 
 /// @custom:security-contact info@whynotswitch.com
 contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     bytes32 public constant MINTER = keccak256("MINTER");
-    Keyring public immutable KEYRING;
     bytes32[4095] public key; // m3ter public keys
     bytes32 anchorBlockhash;
     uint256 chainLength;
@@ -23,12 +21,14 @@ contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     error CannotBeZero();
     error Unauthorized();
     constructor(address defaultAdmin, string memory token0Uri) ERC721("M3ter", unicode"〔▸‿◂〕") {
-        anchorBlockhash = blockhash(block.number - 1);
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(MINTER, defaultAdmin);
         _safeMint(defaultAdmin, 0);
         _setTokenURI(0, token0Uri);
-        KEYRING = new Keyring();
+
+        SSTORE2.writeDeterministic(hex"00", _ref(0));
+        SSTORE2.writeDeterministic(hex"00", _ref(1));
+        anchorBlockhash = blockhash(block.number - 1);
     }
 
     function safeMint(address to, uint256 tokenId, string memory uri) external onlyRole(MINTER) {
@@ -42,7 +42,7 @@ contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
 
         ++chainLength;
         bytes32 proposedNonces = SSTORE2.writeDeterministic(nonces, _ref(0)).codehash;
-        bytes32 proposedTotalizers = SSTORE2.writeDeterministic(totalizers, _ref(0)).codehash;
+        bytes32 proposedTotalizers = SSTORE2.writeDeterministic(totalizers, _ref(1)).codehash;
 
         // verifies proofs; reverts here if proof is invalid
         ISP1Verifier(0x397A5f7f3dBd538f23DE225B51f532c34448dA9B).verifyProof( // SP1 Groth16 verifier gateway
