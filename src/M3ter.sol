@@ -10,16 +10,15 @@ import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/exten
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
 import {ISP1Verifier} from "./interfaces/ISP1Verifier.sol";
+import {IM3ter} from "./interfaces/IM3ter.sol";
 
 /// @custom:security-contact info@whynotswitch.com
-contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
-    bytes32 public constant MINTER = keccak256("MINTER");
-    bytes32[4095] public key; // m3ter public keys
-    bytes32 anchorBlockhash;
+contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     uint256 chainLength;
+    bytes32 anchorBlockhash;
+    bytes32[4095] public key; // m3ter public keys
+    bytes32 public constant MINTER = keccak256("MINTER");
 
-    error CannotBeZero();
-    error Unauthorized();
     constructor(address defaultAdmin, string memory token0Uri) ERC721("M3ter", unicode"〔▸‿◂〕") {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(MINTER, defaultAdmin);
@@ -34,6 +33,12 @@ contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     function safeMint(address to, uint256 tokenId, string memory uri) external onlyRole(MINTER) {
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
+    }
+
+    function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
+        if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
+        if (tokenId == 0 || publicKey == 0) revert CannotBeZero();
+        key[tokenId] = publicKey;
     }
 
     function commitState(bytes calldata nonces, bytes calldata totalizers, bytes calldata proof) external {
@@ -53,18 +58,12 @@ contract M3ter is ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
         anchorBlockhash = blockhash(block.number - 1);
     }
 
-    function nonce(uint256 tokenId) external view returns (uint256) {
-        return uint256(bytes32(SSTORE2.read(SSTORE2.predictDeterministicAddress(_ref(0)), tokenId * 6, ++tokenId * 6)));
+    function nonce(uint256 tokenId) external view returns (bytes6) {
+        return bytes6(SSTORE2.read(SSTORE2.predictDeterministicAddress(_ref(0)), tokenId * 6, ++tokenId * 6));
     }
 
-    function totalizer(uint256 tokenId) external view returns (uint256) {
-        return uint256(bytes32(SSTORE2.read(SSTORE2.predictDeterministicAddress(_ref(1)), tokenId * 6, ++tokenId * 6)));
-    }
-
-    function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
-        if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
-        if (tokenId == 0 || publicKey == 0) revert CannotBeZero();
-        key[tokenId] = publicKey;
+    function totalizer(uint256 tokenId) external view returns (bytes6) {
+        return bytes6(SSTORE2.read(SSTORE2.predictDeterministicAddress(_ref(1)), tokenId * 6, ++tokenId * 6));
     }
 
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
