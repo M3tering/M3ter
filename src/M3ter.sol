@@ -14,7 +14,7 @@ import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/exten
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
 /// @custom:security-contact info@whynotswitch.com
-contract M3ter is PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl, IM3ter {
+contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     bytes32 public constant CURATOR = keccak256("CURATOR");
     bytes32 public constant MINTER = keccak256("MINTER");
     bytes32 anchorBlockHash;
@@ -25,7 +25,7 @@ contract M3ter is PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, Acc
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(CURATOR, defaultAdmin);
         _grantRole(MINTER, defaultAdmin);
-        _setProgramVKey(newProgramVkey);
+        setProgramVKey(newProgramVkey);
 
         // Initialize the state with empty nonces and totalizers
         SSTORE2.writeDeterministic(hex"00", _ref(0));
@@ -73,7 +73,7 @@ contract M3ter is PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, Acc
         return _state(1, tokenId);
     }
 
-    function _setProgramVKey(bytes32 newProgramVKey) public onlyRole(CURATOR) {
+    function setProgramVKey(bytes32 newProgramVKey) public onlyRole(CURATOR) {
         if (newProgramVKey == 0) revert CannotBeZero();
         programVKey = newProgramVKey;
     }

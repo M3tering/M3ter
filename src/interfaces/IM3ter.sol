@@ -20,13 +20,13 @@ interface IM3ter {
 
     function commitState(bytes calldata nonces, bytes calldata totalizers, bytes calldata proof) external;
 
-    function setPublicKey(uint256 tokenId, bytes32 publicKey) external;
-
     function safeMint(uint256 tokenId, address to, string memory uri) external;
 
-    function nonce(uint256 tokenId) external view returns (bytes6);
+    function setPublicKey(uint256 tokenId, bytes32 publicKey) external;
 
     function totalizer(uint256 tokenId) external view returns (bytes6);
 
-    function _setProgramVKey(bytes32 newProgramVKey) external;
+    function nonce(uint256 tokenId) external view returns (bytes6);
+
+    function setProgramVKey(bytes32 newProgramVKey) external;
 }
