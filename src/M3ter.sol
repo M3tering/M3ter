@@ -107,15 +107,15 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         return "ar://";
     }
 
-    function _ref(uint256 x) private view returns (bytes32) {
-        return bytes32(abi.encodePacked(x == 0 ? this.nonce.selector : this.totalizer.selector, uint224(chainLength)));
-    }
-
     function _state(uint256 selector, uint256 tokenId) private view returns (bytes6) {
         address pointer = SSTORE2.predictDeterministicAddress(_ref(selector));
         if (tokenId == 0) return bytes6(SSTORE2.read(pointer, 0, 5));
 
         uint256 index = (tokenId * 6) - 1;
         return bytes6(SSTORE2.read(pointer, index, index + 6));
+    }
+
+    function _ref(uint256 x) private view returns (bytes32) {
+        return bytes32(abi.encodePacked(x == 0 ? this.nonce.selector : this.totalizer.selector, uint224(chainLength)));
     }
 }
