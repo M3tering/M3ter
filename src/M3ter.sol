@@ -17,9 +17,9 @@ import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.
 contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     bytes32 public constant CURATOR = keccak256("CURATOR");
     bytes32 public constant MINTER = keccak256("MINTER");
-    bytes32 anchorBlockHash;
-    bytes32 programVKey;
-    uint256 chainLength;
+    bytes32 public anchorBlockHash;
+    bytes32 public programVKey;
+    uint256 public chainLength;
 
     constructor(address defaultAdmin, bytes32 newProgramVkey) ERC721("M3ter", unicode"〔▸‿◂〕") {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
