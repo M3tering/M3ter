@@ -8,19 +8,18 @@ interface IM3ter {
 
     event NewState(
         address indexed from,
+        bytes32 indexed programVKey,
         uint256 indexed chainLength,
-        bytes32 anchorBlockHash,
-        bytes32 programVKey,
-        bytes32 nonceCodeHash,
-        bytes32 totalizerCodeHash,
+        uint256 anchorBlock,
+        bytes nonces,
+        bytes totalizers,
         bytes proof
     );
 
     event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
-    function initializeChain(bytes32 newProgramVkey) external;
-
-    function commitState(bytes calldata nonces, bytes calldata totalizers, bytes calldata proof) external;
+    function commitState(uint256 anchorBlock, bytes calldata nonces, bytes calldata totalizers, bytes calldata proof)
+        external;
 
     function safeMint(uint256 tokenId, address to, string memory uri) external;
 

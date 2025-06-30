@@ -17,43 +17,42 @@ import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.
 contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     bytes32 public constant CURATOR = keccak256("CURATOR");
     bytes32 public constant MINTER = keccak256("MINTER");
-    bytes32 public anchorBlockHash;
     bytes32 public programVKey;
     uint256 public chainLength;
 
-    constructor(address defaultAdmin) ERC721("M3ter", unicode"〔▸‿◂〕") {
+    constructor(address defaultAdmin, bytes32 newProgramVKey) ERC721("M3ter", unicode"〔▸‿◂〕") {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(CURATOR, defaultAdmin);
         _grantRole(MINTER, defaultAdmin);
-    }
 
-    function initializeChain(bytes32 newProgramVkey) external {
-        if (programVKey != 0) revert Unauthorized();
-
-        setProgramVKey(newProgramVkey);
+        setProgramVKey(newProgramVKey);
         SSTORE2.writeDeterministic(hex"00", _ref(0));
         SSTORE2.writeDeterministic(hex"00", _ref(1));
-        anchorBlockHash = blockhash(block.number - 1);
-        emit NewState(msg.sender, chainLength, hex"", hex"", hex"", hex"", hex"");
+        emit NewState(msg.sender, programVKey, chainLength, block.number, hex"", hex"", hex"");
     }
 
-    function commitState(bytes calldata nonces, bytes calldata totalizers, bytes calldata proof) external {
-        bytes32 priorNonces = SSTORE2.predictDeterministicAddress(_ref(0)).codehash;
-        bytes32 priorTotalizers = SSTORE2.predictDeterministicAddress(_ref(1)).codehash;
+    function commitState(uint256 anchorBlock, bytes calldata nonces, bytes calldata totalizers, bytes calldata proof)
+        external
+    {
+        if (blockhash(anchorBlock) == 0) revert CannotBeZero(); // blockhash is not available for the given block number
+
+        bytes32 priorNoncesHash = SSTORE2.predictDeterministicAddress(_ref(0)).codehash;
+        bytes32 priorTotalizersHash = SSTORE2.predictDeterministicAddress(_ref(1)).codehash;
 
         ++chainLength;
-        bytes32 proposedNonces = SSTORE2.writeDeterministic(nonces, _ref(0)).codehash;
-        bytes32 proposedTotalizers = SSTORE2.writeDeterministic(totalizers, _ref(1)).codehash;
+        bytes32 proposedNoncesHash = SSTORE2.writeDeterministic(nonces, _ref(0)).codehash;
+        bytes32 proposedTotalizersHash = SSTORE2.writeDeterministic(totalizers, _ref(1)).codehash;
 
         // verifies proofs; reverts here if proof is invalid
         ISP1Verifier(0x397A5f7f3dBd538f23DE225B51f532c34448dA9B).verifyProof( // SP1 Groth16 verifier gateway
             programVKey,
-            bytes.concat(anchorBlockHash, priorNonces, priorTotalizers, proposedNonces, proposedTotalizers),
+            bytes.concat(
+                blockhash(anchorBlock), priorNoncesHash, priorTotalizersHash, proposedNoncesHash, proposedTotalizersHash
+            ),
             proof
         );
 
-        emit NewState(msg.sender, chainLength, anchorBlockHash, programVKey, proposedNonces, proposedTotalizers, proof);
-        anchorBlockHash = blockhash(block.number - 1); // set an anchor for the next state commitment
+        emit NewState(msg.sender, programVKey, chainLength, anchorBlock, nonces, totalizers, proof);
     }
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
