@@ -18,6 +18,8 @@ interface IM3ter {
 
     event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
+    function initializeChain(bytes32 newProgramVkey) external;
+
     function commitState(bytes calldata nonces, bytes calldata totalizers, bytes calldata proof) external;
 
     function safeMint(uint256 tokenId, address to, string memory uri) external;

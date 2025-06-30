@@ -21,17 +21,20 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
     bytes32 public programVKey;
     uint256 public chainLength;
 
-    constructor(address defaultAdmin, bytes32 newProgramVkey) ERC721("M3ter", unicode"〔▸‿◂〕") {
+    constructor(address defaultAdmin) ERC721("M3ter", unicode"〔▸‿◂〕") {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(CURATOR, defaultAdmin);
         _grantRole(MINTER, defaultAdmin);
-        setProgramVKey(newProgramVkey);
+    }
 
-        // Initialize the state with empty nonces and totalizers
+    function initializeChain(bytes32 newProgramVkey) external {
+        if (programVKey != 0) revert Unauthorized();
+
+        setProgramVKey(newProgramVkey);
         SSTORE2.writeDeterministic(hex"00", _ref(0));
         SSTORE2.writeDeterministic(hex"00", _ref(1));
         anchorBlockHash = blockhash(block.number - 1);
-        emit NewState(defaultAdmin, chainLength, hex"", hex"", hex"", hex"", hex"");
+        emit NewState(msg.sender, chainLength, hex"", hex"", hex"", hex"", hex"");
     }
 
     function commitState(bytes calldata nonces, bytes calldata totalizers, bytes calldata proof) external {
