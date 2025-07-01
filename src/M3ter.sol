@@ -26,9 +26,9 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         _grantRole(MINTER, defaultAdmin);
 
         setProgramVKey(newProgramVKey);
-        SSTORE2.writeDeterministic(hex"00", _ref(0));
-        SSTORE2.writeDeterministic(hex"00", _ref(1));
-        emit NewState(msg.sender, programVKey, chainLength, block.number, hex"", hex"", hex"");
+        SSTORE2.writeDeterministic(hex"00", _pointer(0, 0));
+        SSTORE2.writeDeterministic(hex"00", _pointer(0, 1));
+        emit NewState(defaultAdmin, newProgramVKey, 0, block.number, hex"", hex"", hex"");
     }
 
     function commitState(uint256 anchorBlock, bytes calldata nonces, bytes calldata totalizers, bytes calldata proof)
@@ -36,12 +36,12 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
     {
         if (blockhash(anchorBlock) == 0) revert CannotBeZero(); // blockhash is not available for the given block number
 
-        bytes32 priorNoncesHash = SSTORE2.predictDeterministicAddress(_ref(0)).codehash;
-        bytes32 priorTotalizersHash = SSTORE2.predictDeterministicAddress(_ref(1)).codehash;
+        bytes32 priorNoncesHash = stateAddress(chainLength, 0).codehash;
+        bytes32 priorTotalizersHash = stateAddress(chainLength, 1).codehash;
 
         ++chainLength;
-        bytes32 proposedNoncesHash = SSTORE2.writeDeterministic(nonces, _ref(0)).codehash;
-        bytes32 proposedTotalizersHash = SSTORE2.writeDeterministic(totalizers, _ref(1)).codehash;
+        bytes32 proposedNoncesHash = SSTORE2.writeDeterministic(nonces, _pointer(chainLength, 0)).codehash;
+        bytes32 proposedTotalizersHash = SSTORE2.writeDeterministic(totalizers, _pointer(chainLength, 1)).codehash;
 
         // verifies proofs; reverts here if proof is invalid
         ISP1Verifier(0x397A5f7f3dBd538f23DE225B51f532c34448dA9B).verifyProof( // SP1 Groth16 verifier gateway
@@ -68,16 +68,20 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
     }
 
     function nonce(uint256 tokenId) external view returns (bytes6) {
-        return _state(0, tokenId);
+        return _stateOf(tokenId, 0);
     }
 
     function totalizer(uint256 tokenId) external view returns (bytes6) {
-        return _state(1, tokenId);
+        return _stateOf(tokenId, 1);
     }
 
     function setProgramVKey(bytes32 newProgramVKey) public onlyRole(CURATOR) {
         if (newProgramVKey == 0) revert CannotBeZero();
         programVKey = newProgramVKey;
+    }
+
+    function stateAddress(uint256 at, uint256 io) public view returns (address) {
+        return SSTORE2.predictDeterministicAddress(_pointer(at, io));
     }
 
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
@@ -109,15 +113,14 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         return "ar://";
     }
 
-    function _state(uint256 selector, uint256 tokenId) private view returns (bytes6) {
-        address pointer = SSTORE2.predictDeterministicAddress(_ref(selector));
+    function _stateOf(uint256 tokenId, uint256 io) private view returns (bytes6) {
+        address pointer = stateAddress(chainLength, io);
         if (tokenId == 0) return bytes6(SSTORE2.read(pointer, 0, 5));
-
         uint256 index = (tokenId * 6) - 1;
         return bytes6(SSTORE2.read(pointer, index, index + 6));
     }
 
-    function _ref(uint256 x) private view returns (bytes32) {
-        return bytes32(abi.encodePacked(x == 0 ? this.nonce.selector : this.totalizer.selector, uint224(chainLength)));
+    function _pointer(uint256 at, uint256 io) private pure returns (bytes32) {
+        return bytes32(abi.encodePacked(io == 0 ? this.nonce.selector : this.totalizer.selector, uint224(at)));
     }
 }

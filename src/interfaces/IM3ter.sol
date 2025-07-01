@@ -21,6 +21,8 @@ interface IM3ter {
     function commitState(uint256 anchorBlock, bytes calldata nonces, bytes calldata totalizers, bytes calldata proof)
         external;
 
+    function stateAddress(uint256 at, uint256 io) external view returns (address);
+
     function safeMint(uint256 tokenId, address to, string memory uri) external;
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external;
