@@ -61,6 +61,40 @@ contract M3ter is IM3ter, ERC721Enumerable, ERC721URIStorage, ERC721Pausable, ER
         keyRegistry[publicKey] = tokenId;
     }
 
+    // function _curateVerifiers(IGatewayVerifier verifier) external onlyRole(CURATOR) {
+    //     verifiers.push(verifier);
+    // }
+
+    //     function keyringHash() external view returns (uint256) {
+    //     // for (uint i=0; i<verifiers.length; i++) {
+    //     //     IGatewayVerifier verifier = verifiers[i];
+    //     //  ToDo: recursively fetch and aggregate data across supported chains
+    //     // }
+    //     GatewayRequest memory request = GatewayFetcher
+    //     .newRequest(1)      // Specify the number of outputs
+    //     .setTarget(KEYRING) // Specify the contract address
+    //     .setSlot(0)         // go to the base slot number
+    //     .readBytes();       // reads a 32-byte value onto the stack. (ie the first slot)
+
+    //     // For subsequent slots (1 through 4094)
+    //     for (uint256 i = 1; i < 4095; i++) {
+    //         request
+    //         .setSlot(i)     // go to slot number `i`
+    //         .readBytes()    // reads another 32-byte value onto the stack
+    //         .concat();      // concatenated stack contents (ie existing-blob and last-read-slot)
+    //     }
+    //     request
+    //     .keccak()           // Compute keccak256 hash of that blob on the stack
+    //     .setOutput(0);      // Set it at output index 0
+
+    //     // The chain specific verifier contract defines the appropriate gateway URL for the request, and then verifies the response.
+    //     fetch(verifiers[1], request, this.CCIPReadCallback.selector);
+    // }
+
+    // function CCIPReadCallback(bytes[] calldata values, uint8, bytes calldata /*extraData*/) external pure returns (bytes32) {
+    //     return abi.decode(values[0], (bytes32));
+    // }
+
     function read(address source, bytes32 tokenId) external view returns (uint256) {
         if (source == address(0)) revert CannotBeZero();
 
