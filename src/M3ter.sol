@@ -33,8 +33,8 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
 
     function commitState(
         uint256 checkpoint,
-        bytes calldata nonceState,
         bytes calldata totalizerState,
+        bytes calldata nonceState,
         bytes calldata proof
     ) external {
         if (blockhash(checkpoint) == 0) revert CannotBeZero(); // blockhash is not available for the given block number
@@ -49,13 +49,13 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
             bytes.concat(
                 blockhash(checkpoint),
                 parentStateCommitment,
-                SSTORE2.writeDeterministic(nonceState, _pointer(chainLength, 0)).codehash,
-                SSTORE2.writeDeterministic(totalizerState, _pointer(chainLength, 1)).codehash
+                SSTORE2.writeDeterministic(totalizerState, _pointer(chainLength, 1)).codehash,
+                SSTORE2.writeDeterministic(nonceState, _pointer(chainLength, 0)).codehash
             ),
             proof
         );
 
-        emit NewState(msg.sender, programVKey, chainLength, checkpoint, nonceState, totalizerState, proof);
+        emit NewState(msg.sender, programVKey, chainLength, checkpoint, totalizerState, nonceState, proof);
     }
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
@@ -70,11 +70,11 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         _setTokenURI(tokenId, uri);
     }
 
-    function nonce(uint256 tokenId) external view returns (bytes6) {
+    function totalizer(uint256 tokenId) external view returns (bytes6) {
         return _stateOf(tokenId, 0);
     }
 
-    function totalizer(uint256 tokenId) external view returns (bytes6) {
+    function nonce(uint256 tokenId) external view returns (bytes6) {
         return _stateOf(tokenId, 1);
     }
 
@@ -124,6 +124,6 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
     }
 
     function _pointer(uint256 at, uint256 io) private pure returns (bytes32) {
-        return bytes32(abi.encodePacked(io == 0 ? this.nonce.selector : this.totalizer.selector, uint224(at)));
+        return bytes32(abi.encodePacked(io == 0 ? this.totalizer.selector : this.nonce.selector, uint224(at)));
     }
 }

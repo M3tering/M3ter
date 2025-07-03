@@ -11,8 +11,8 @@ interface IM3ter {
         bytes32 indexed programVKey,
         uint256 indexed chainLength,
         uint256 checkpoint,
-        bytes nonceState,
         bytes totalizerState,
+        bytes nonceState,
         bytes proof
     );
 
@@ -20,8 +20,8 @@ interface IM3ter {
 
     function commitState(
         uint256 checkpoint,
-        bytes calldata nonceState,
         bytes calldata totalizerState,
+        bytes calldata nonceState,
         bytes calldata proof
     ) external;
 
