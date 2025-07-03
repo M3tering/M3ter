@@ -10,16 +10,20 @@ interface IM3ter {
         address indexed from,
         bytes32 indexed programVKey,
         uint256 indexed chainLength,
-        uint256 anchorBlock,
-        bytes nonces,
-        bytes totalizers,
+        uint256 checkpoint,
+        bytes nonceState,
+        bytes totalizerState,
         bytes proof
     );
 
     event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
-    function commitState(uint256 anchorBlock, bytes calldata nonces, bytes calldata totalizers, bytes calldata proof)
-        external;
+    function commitState(
+        uint256 checkpoint,
+        bytes calldata nonceState,
+        bytes calldata totalizerState,
+        bytes calldata proof
+    ) external;
 
     function stateAddress(uint256 at, uint256 io) external view returns (address);
 

@@ -31,28 +31,31 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         emit NewState(defaultAdmin, newProgramVKey, 0, block.number, hex"", hex"", hex"");
     }
 
-    function commitState(uint256 anchorBlock, bytes calldata nonces, bytes calldata totalizers, bytes calldata proof)
-        external
-    {
-        if (blockhash(anchorBlock) == 0) revert CannotBeZero(); // blockhash is not available for the given block number
-
-        bytes32 priorNoncesHash = stateAddress(chainLength, 0).codehash;
-        bytes32 priorTotalizersHash = stateAddress(chainLength, 1).codehash;
+    function commitState(
+        uint256 checkpoint,
+        bytes calldata nonceState,
+        bytes calldata totalizerState,
+        bytes calldata proof
+    ) external {
+        if (blockhash(checkpoint) == 0) revert CannotBeZero(); // blockhash is not available for the given block number
+        bytes memory parentStateCommitment =
+            abi.encode(stateAddress(chainLength, 0).codehash, stateAddress(chainLength, 1).codehash);
 
         ++chainLength;
-        bytes32 proposedNoncesHash = SSTORE2.writeDeterministic(nonces, _pointer(chainLength, 0)).codehash;
-        bytes32 proposedTotalizersHash = SSTORE2.writeDeterministic(totalizers, _pointer(chainLength, 1)).codehash;
 
         // verifies proofs; reverts here if proof is invalid
         ISP1Verifier(0x397A5f7f3dBd538f23DE225B51f532c34448dA9B).verifyProof( // SP1 Groth16 verifier gateway
             programVKey,
             bytes.concat(
-                blockhash(anchorBlock), priorNoncesHash, priorTotalizersHash, proposedNoncesHash, proposedTotalizersHash
+                blockhash(checkpoint),
+                parentStateCommitment,
+                SSTORE2.writeDeterministic(nonceState, _pointer(chainLength, 0)).codehash,
+                SSTORE2.writeDeterministic(totalizerState, _pointer(chainLength, 1)).codehash
             ),
             proof
         );
 
-        emit NewState(msg.sender, programVKey, chainLength, anchorBlock, nonces, totalizers, proof);
+        emit NewState(msg.sender, programVKey, chainLength, checkpoint, nonceState, totalizerState, proof);
     }
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
