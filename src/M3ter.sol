@@ -21,14 +21,13 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
     uint256 public chainLength;
 
     constructor(address defaultAdmin, bytes32 newProgramVKey) ERC721("M3ter", unicode"〔▸‿◂〕") {
+        emit NewState(defaultAdmin, newProgramVKey, 0, block.number, hex"", hex"", hex"");
+        SSTORE2.writeDeterministic(hex"00", _pointer(0, 0));
+        SSTORE2.writeDeterministic(hex"00", _pointer(0, 1));
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(CURATOR, defaultAdmin);
         _grantRole(MINTER, defaultAdmin);
-
         setProgramVKey(newProgramVKey);
-        SSTORE2.writeDeterministic(hex"00", _pointer(0, 0));
-        SSTORE2.writeDeterministic(hex"00", _pointer(0, 1));
-        emit NewState(defaultAdmin, newProgramVKey, 0, block.number, hex"", hex"", hex"");
     }
 
     function commitState(
@@ -37,24 +36,24 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         bytes calldata nonceState,
         bytes calldata proof
     ) external {
-        if (blockhash(checkpoint) == 0) revert CannotBeZero(); // blockhash is not available for the given block number
+        bytes32 L1Commitment = blockhash(checkpoint);
+        if (L1Commitment == 0) revert CannotBeZero(); // blockhash is not available for the given block number
+
         bytes memory parentStateCommitment =
-            abi.encode(stateAddress(chainLength, 0).codehash, stateAddress(chainLength, 1).codehash);
+            abi.encode(stateAddress(chainLength, 0).codehash, stateAddress(chainLength, 1).codehash); // current totalizer & nonce state commitment
 
-        ++chainLength;
-
-        // verifies proofs; reverts here if proof is invalid
-        ISP1Verifier(0x397A5f7f3dBd538f23DE225B51f532c34448dA9B).verifyProof( // SP1 Groth16 verifier gateway
+        chainLength++;
+        // verifies proofs via SP1 Groth16 verifier gateway; reverts here if proof is invalid
+        ISP1Verifier(0x397A5f7f3dBd538f23DE225B51f532c34448dA9B).verifyProof(
             programVKey,
-            bytes.concat(
-                blockhash(checkpoint),
+            bytes.concat( // public values encoded as bytes
+                L1Commitment,
                 parentStateCommitment,
-                SSTORE2.writeDeterministic(totalizerState, _pointer(chainLength, 1)).codehash,
-                SSTORE2.writeDeterministic(nonceState, _pointer(chainLength, 0)).codehash
+                SSTORE2.writeDeterministic(totalizerState, _pointer(chainLength, 0)).codehash,
+                SSTORE2.writeDeterministic(nonceState, _pointer(chainLength, 1)).codehash
             ),
             proof
         );
-
         emit NewState(msg.sender, programVKey, chainLength, checkpoint, totalizerState, nonceState, proof);
     }
 
