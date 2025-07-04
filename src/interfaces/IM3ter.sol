@@ -6,20 +6,20 @@ interface IM3ter {
     error CannotBeZero();
     error Unauthorized();
 
+    event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
+
     event NewState(
         address indexed from,
         bytes32 indexed programVKey,
         uint256 indexed chainLength,
-        uint256 checkpoint,
+        uint256 anchorBlock,
         bytes totalizerState,
         bytes nonceState,
         bytes proof
     );
 
-    event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
-
     function commitState(
-        uint256 checkpoint,
+        uint256 anchorBlock,
         bytes calldata totalizerState,
         bytes calldata nonceState,
         bytes calldata proof

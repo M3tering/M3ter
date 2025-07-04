@@ -2,16 +2,16 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.28;
 
-import {PublicKeyring} from "./PublicKeyring.sol";
-import {ISP1Verifier} from "./interfaces/ISP1Verifier.sol";
-import {IM3ter} from "./interfaces/IM3ter.sol";
-
 import {SSTORE2} from "solady/src/utils/SSTORE2.sol";
 
 import {ERC721} from "@openzeppelin/contracts@5.1.0/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts@5.1.0/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/extensions/ERC721URIStorage.sol";
 import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
+
+import {PublicKeyring} from "./PublicKeyring.sol";
+import {ISP1Verifier} from "./interfaces/ISP1Verifier.sol";
+import {IM3ter} from "./interfaces/IM3ter.sol";
 
 /// @custom:security-contact info@whynotswitch.com
 contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
@@ -50,18 +50,9 @@ contract M3ter is IM3ter, PublicKeyring, ERC721, ERC721Enumerable, ERC721URIStor
         );
 
         chainLength++;
+        emit NewState(msg.sender, programVKey, chainLength, anchorBlock, totalizerState, nonceState, proof);
         SSTORE2.writeDeterministic(totalizerState, _pointer(chainLength, 0));
         SSTORE2.writeDeterministic(nonceState, _pointer(chainLength, 1));
-
-        emit NewState(
-            msg.sender,
-            programVKey,
-            chainLength,
-            anchorBlock,
-            bytes.concat(hex"00", totalizerState),
-            bytes.concat(hex"00", nonceState),
-            proof
-        );
     }
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
