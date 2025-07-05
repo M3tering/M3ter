@@ -8,32 +8,7 @@ interface IM3ter {
 
     event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
-    event NewState(
-        address indexed from,
-        bytes32 indexed programVKey,
-        uint256 indexed chainLength,
-        uint256 anchorBlock,
-        bytes totalizerState,
-        bytes nonceState,
-        bytes proof
-    );
-
-    function commitState(
-        uint256 anchorBlock,
-        bytes calldata totalizerState,
-        bytes calldata nonceState,
-        bytes calldata proof
-    ) external;
-
-    function stateAddress(uint256 at, uint256 io) external view returns (address);
-
     function safeMint(uint256 tokenId, address to, string memory uri) external;
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external;
-
-    function totalizer(uint256 tokenId) external view returns (bytes6);
-
-    function nonce(uint256 tokenId) external view returns (bytes6);
-
-    function setProgramVKey(bytes32 newProgramVKey) external;
 }
