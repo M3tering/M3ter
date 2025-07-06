@@ -13,7 +13,7 @@ import {IM3ter} from "./interfaces/IM3ter.sol";
 contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
     bytes32 public constant CURATOR = keccak256("CURATOR");
     bytes32 public constant MINTER = keccak256("MINTER");
-    mapping (uint256 => bytes32) public key;
+    mapping(uint256 => bytes32) public key;
 
     constructor(address defaultAdmin) ERC721("M3ter", unicode"〔▸‿◂〕") {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
