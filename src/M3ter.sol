@@ -8,14 +8,13 @@ import {LibString} from "solady@0.1.7/src/utils/LibString.sol";
 import {OwnableRoles} from "solady@0.1.7/src/auth/OwnableRoles.sol";
 import {EnumerableSetLib} from "solady@0.1.7/src/utils/EnumerableSetLib.sol";
 
-
 contract PublicKeyring {
     mapping(uint256 => bytes32) public key;
 }
 
 /// @title M3ter
 /// @custom:security-contact info@whynotswitch.com
-contract M3ter is IM3ter, PublicKeyring,ERC721, OwnableRoles {
+contract M3ter is IM3ter, PublicKeyring, ERC721, OwnableRoles {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using LibString for uint256;
 
