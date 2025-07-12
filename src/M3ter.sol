@@ -14,7 +14,7 @@ contract PublicKeyring {
 
 /// @title M3ter
 /// @custom:security-contact info@whynotswitch.com
-contract M3ter is IM3ter, PublicKeyring, ERC721, OwnableRoles {
+contract M3ter is PublicKeyring, ERC721, OwnableRoles, IM3ter{
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using LibString for uint256;
 
