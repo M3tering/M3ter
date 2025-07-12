@@ -7,7 +7,7 @@ interface IM3ter {
 
     event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
-    function safeMint(uint256 tokenId, address to, string memory uri) external;
+    function safeMint(uint256 tokenId, address to, string memory uri) external payable;
 
-    function setPublicKey(uint256 tokenId, bytes32 publicKey) external;
+    function setPublicKey(uint256 tokenId, bytes32 publicKey) external payable;
 }
