@@ -1,64 +1,90 @@
 // SPDX-License-Identifier: MIT
-// Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.28;
-
-import {ERC721} from "@openzeppelin/contracts@5.1.0/token/ERC721/ERC721.sol";
-import {ERC721Enumerable} from "@openzeppelin/contracts@5.1.0/token/ERC721/extensions/ERC721Enumerable.sol";
-import {ERC721URIStorage} from "@openzeppelin/contracts@5.1.0/token/ERC721/extensions/ERC721URIStorage.sol";
-import {AccessControl} from "@openzeppelin/contracts@5.1.0/access/AccessControl.sol";
 
 import {IM3ter} from "./interfaces/IM3ter.sol";
 
-/// @custom:security-contact info@whynotswitch.com
-contract M3ter is IM3ter, ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl {
-    bytes32 public constant CURATOR = keccak256("CURATOR");
-    bytes32 public constant MINTER = keccak256("MINTER");
-    mapping(uint256 => bytes32) public key;
+import {ERC721} from "solady@0.1.7/src/tokens/ERC721.sol";
+import {LibString} from "solady@0.1.7/src/utils/LibString.sol";
+import {OwnableRoles} from "solady@0.1.7/src/auth/OwnableRoles.sol";
+import {EnumerableSetLib} from "solady@0.1.7/src/utils/EnumerableSetLib.sol";
 
-    constructor(address defaultAdmin) ERC721("M3ter", unicode"〔▸‿◂〕") {
-        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
-        _grantRole(CURATOR, defaultAdmin);
-        _grantRole(MINTER, defaultAdmin);
+
+contract PublicKeyring {
+    mapping(uint256 => bytes32) public key;
+}
+
+/// @title M3ter
+/// @custom:security-contact info@whynotswitch.com
+contract M3ter is IM3ter, PublicKeyring,ERC721, OwnableRoles {
+    using EnumerableSetLib for EnumerableSetLib.Uint256Set;
+    using LibString for uint256;
+
+    EnumerableSetLib.Uint256Set private _allTokens;
+    mapping(address => EnumerableSetLib.Uint256Set) private _ownedTokens;
+    mapping(uint256 => string) private _tokenURIs;
+
+    uint256 public constant MINTER = _ROLE_0;
+
+    constructor(address defaultAdmin) {
+        _initializeOwner(defaultAdmin);
+        _grantRoles(defaultAdmin, MINTER);
+    }
+
+    function safeMint(uint256 tokenId, address to, string memory uri) external onlyRoles(MINTER) {
+        _safeMint(to, tokenId);
+        _tokenURIs[tokenId] = uri;
     }
 
     function setPublicKey(uint256 tokenId, bytes32 publicKey) external {
-        emit NewKey(tokenId, publicKey, msg.sender, block.timestamp);
         if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
-        if (publicKey == 0) revert CannotBeZero();
+        if (publicKey == bytes32(0)) revert CannotBeZero();
         key[tokenId] = publicKey;
+        emit NewKey(tokenId, publicKey, msg.sender, block.timestamp);
     }
 
-    function safeMint(uint256 tokenId, address to, string memory uri) external onlyRole(MINTER) {
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+    function totalSupply() external view returns (uint256) {
+        return _allTokens.length();
     }
 
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
+    function tokenByIndex(uint256 index) external view returns (uint256) {
+        return _allTokens.at(index);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721Enumerable, ERC721URIStorage, AccessControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
+    function tokenOfOwnerByIndex(address account, uint256 index) external view returns (uint256) {
+        return _ownedTokens[account].at(index);
     }
 
-    function _update(address to, uint256 tokenId, address auth)
-        internal
-        override(ERC721, ERC721Enumerable)
-        returns (address)
-    {
-        return super._update(to, tokenId, auth);
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        string memory uri = _tokenURIs[tokenId];
+        if (bytes(uri).length == 0) {
+            return string.concat("ar://", tokenId.toString());
+        }
+        return uri;
     }
 
-    function _increaseBalance(address account, uint128 value) internal override(ERC721, ERC721Enumerable) {
-        super._increaseBalance(account, value);
+    function name() public pure override returns (string memory) {
+        return "M3ter";
     }
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "ar://";
+    function symbol() public pure override returns (string memory) {
+        return unicode"〔▸‿◂〕";
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
+        if (from == address(0)) {
+            // Mint: add to global set
+            _allTokens.add(tokenId);
+        } else if (from != to) {
+            // Transfer out: remove from owner
+            _ownedTokens[from].remove(tokenId);
+        }
+
+        if (to == address(0)) {
+            // Burn: remove from global set
+            _allTokens.remove(tokenId);
+        } else if (to != from) {
+            // Transfer in: add to new owner
+            _ownedTokens[to].add(tokenId);
+        }
     }
 }
