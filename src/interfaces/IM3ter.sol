@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 
 interface IM3ter {
     error CannotBeZero();
-    error Unauthorized();
 
     event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
