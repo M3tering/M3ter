@@ -10,4 +10,6 @@ interface IM3ter {
     function setPublicKey(uint256 tokenId, bytes32 newKey) external payable;
 
     function publicKey(uint256 tokenId) external view returns (bytes32 key);
+
+    function tokenID(bytes32 publicKey) external view returns (uint256 tokenId);
 }
