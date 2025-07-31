@@ -11,7 +11,7 @@ import {IM3ter} from "./interfaces/IM3ter.sol";
 contract M3ter is ERC721, OwnableRoles, IM3ter {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
 
-    uint256 public constant KEYRING_BASE_SLOT = uint256(keccak256("KEYRING"));
+    uint256 public constant KEYSTORE_BASE_SLOT = uint256(keccak256("KEYRING"));
     mapping(bytes32 => uint256) public tokenID;
     mapping(uint256 => string) _tokenURIs;
     mapping(address => EnumerableSetLib.Uint256Set) _ownedTokens;
@@ -30,7 +30,7 @@ contract M3ter is ERC721, OwnableRoles, IM3ter {
     function setPublicKey(uint256 tokenId, bytes32 newKey) external payable {
         emit NewKey(tokenId, newKey, msg.sender, block.timestamp);
         if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
-        uint256 slot = KEYRING_BASE_SLOT + tokenId;
+        uint256 slot = KEYSTORE_BASE_SLOT + tokenId;
         tokenID[newKey] = tokenId;
         assembly {
             sstore(slot, newKey)
@@ -38,7 +38,7 @@ contract M3ter is ERC721, OwnableRoles, IM3ter {
     }
 
     function publicKey(uint256 tokenId) external view returns (bytes32 key) {
-        uint256 slot = KEYRING_BASE_SLOT + tokenId;
+        uint256 slot = KEYSTORE_BASE_SLOT + tokenId;
         assembly {
             key := sload(slot)
         }
