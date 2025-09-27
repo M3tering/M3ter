@@ -1,18 +1,22 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib"]
 optimizer = true
 optimizer-runs = 1000
-solc-version = "0.8.24"
+solc-version = "0.8.28"
+libs = ["dependencies"]
 
 remappings = [
-    "@openzeppelin/contracts@5.0.2/=lib/openzeppelin-contracts/contracts/"
+    "solady@0.1.7/=dependencies/solady-0.1.7/",
 ]
 
-[rpc_endpoints]
-gnosis-mainnet = "https://gnosis-rpc.publicnode.com"
-chiado-testnet = "https://rpc.chiadochain.net"
+[soldeer]
+remappings_generate = false
+remappings_location = "config"
+
+[dependencies]
+forge-std = "1.9.5"
+solady = "0.1.7"
 
 [fuzz]
 seed = "0x544D"

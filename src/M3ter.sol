@@ -1,34 +1,75 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
-import "./interfaces/IM3ter.sol";
-import "./ERC721ABC.sol";
+import {ERC721} from "solady@0.1.7/src/tokens/ERC721.sol";
+import {OwnableRoles} from "solady@0.1.7/src/auth/OwnableRoles.sol";
+import {EnumerableSetLib} from "solady@0.1.7/src/utils/EnumerableSetLib.sol";
+
+import {IM3ter} from "./interfaces/IM3ter.sol";
 
 /// @custom:security-contact info@whynotswitch.com
-contract M3ter is ERC721ABC, IM3ter {
-    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    uint256 public nextTokenId;
+contract M3ter is ERC721, OwnableRoles, IM3ter {
+    using EnumerableSetLib for EnumerableSetLib.Uint256Set;
 
-    mapping(uint256 => bytes32) public keyByToken;
-    mapping(bytes32 => uint256) public tokenByKey;
+    uint256 public constant KEYSTORE_BASE_SLOT = uint256(keccak256("KEYRING"));
+    mapping(bytes32 => uint256) public tokenID;
+    mapping(uint256 => string) _tokenURIs;
+    mapping(address => EnumerableSetLib.Uint256Set) _ownedTokens;
+    EnumerableSetLib.Uint256Set _allTokens;
 
-    constructor() ERC721("M3ter", "{*_*}") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(REGISTRAR_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
+    constructor(address defaultAdmin) {
+        _initializeOwner(defaultAdmin);
+        _grantRoles(defaultAdmin, _ROLE_0);
     }
 
-    function safeMint(address to, string memory uri) external onlyRole(MINTER_ROLE) whenNotPaused {
-        uint256 tokenId = nextTokenId++;
-        _setTokenURI(tokenId, uri);
+    function safeMint(uint256 tokenId, address to, string memory uri) external payable onlyRoles(_ROLE_0) {
+        _tokenURIs[tokenId] = uri;
         _safeMint(to, tokenId);
     }
 
-    function _register(uint256 tokenId, bytes32 publicKey) external onlyRole(REGISTRAR_ROLE) whenNotPaused {
-        emit Register(tokenId, publicKey, msg.sender, block.timestamp);
-        keyByToken[tokenId] = publicKey;
-        tokenByKey[publicKey] = tokenId;
+    function setPublicKey(uint256 tokenId, bytes32 newKey) external payable {
+        emit NewKey(tokenId, newKey, msg.sender, block.timestamp);
+        if (msg.sender != ownerOf(tokenId)) revert Unauthorized();
+        uint256 slot = KEYSTORE_BASE_SLOT + tokenId;
+        tokenID[newKey] = tokenId;
+        assembly {
+            sstore(slot, newKey)
+        }
+    }
+
+    function publicKey(uint256 tokenId) external view returns (bytes32 key) {
+        uint256 slot = KEYSTORE_BASE_SLOT + tokenId;
+        assembly {
+            key := sload(slot)
+        }
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return _allTokens.length();
+    }
+
+    function tokenByIndex(uint256 index) external view returns (uint256) {
+        return _allTokens.at(index);
+    }
+
+    function tokenOfOwnerByIndex(address account, uint256 index) external view returns (uint256) {
+        return _ownedTokens[account].at(index);
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        return _tokenURIs[tokenId];
+    }
+
+    function name() public pure override returns (string memory) {
+        return "M3ter";
+    }
+
+    function symbol() public pure override returns (string memory) {
+        return unicode"〔▸‿◂〕";
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
+        from == address(0) ? _allTokens.add(tokenId) : _ownedTokens[from].remove(tokenId);
+        to == address(0) ? _allTokens.remove(tokenId) : _ownedTokens[to].add(tokenId);
     }
 }

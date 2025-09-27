@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+// Compatible with OpenZeppelin Contracts ^5.0.0
+pragma solidity ^0.8.28;
 
-import "@openzeppelin/contracts@5.0.2/interfaces/IERC721.sol";
+interface IM3ter {
+    event NewKey(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
 
-interface IM3ter is IERC721 {
-    event Register(uint256 indexed tokenId, bytes32 indexed publicKey, address from, uint256 timestamp);
+    function safeMint(uint256 tokenId, address to, string memory uri) external payable;
 
-    function safeMint(address to, string memory uri) external;
+    function setPublicKey(uint256 tokenId, bytes32 newKey) external payable;
 
-    function _register(uint256 tokenId, bytes32 publicKey) external;
+    function publicKey(uint256 tokenId) external view returns (bytes32 key);
+
+    function tokenID(bytes32 publicKey) external view returns (uint256 tokenId);
 }
